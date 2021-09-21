@@ -1,20 +1,20 @@
 <?php
- /**
-  *------
-  * BGA framework: © Gregory Isabelli <gisabelli@boardgamearena.com> & Emmanuel Colin <ecolin@boardgamearena.com>
-  * EclipticTravelers implementation : © <Your name here> <Your email address here>
-  *
-  * This code has been produced on the BGA studio platform for use on http://boardgamearena.com.
-  * See http://en.boardgamearena.com/#!doc/Studio for more information.
-  * -----
-  *
-  * ecliptictravelers.game.php
-  *
-  * This is the main file for your game logic.
-  *
-  * In this PHP file, you are going to defines the rules of the game.
-  *
-  */
+/**
+ *------
+ * BGA framework: © Gregory Isabelli <gisabelli@boardgamearena.com> & Emmanuel Colin <ecolin@boardgamearena.com>
+ * EclipticTravelers implementation : © <Your name here> <Your email address here>
+ *
+ * This code has been produced on the BGA studio platform for use on http://boardgamearena.com.
+ * See http://en.boardgamearena.com/#!doc/Studio for more information.
+ * -----
+ *
+ * ecliptictravelers.game.php
+ *
+ * This is the main file for your game logic.
+ *
+ * In this PHP file, you are going to defines the rules of the game.
+ *
+ */
 
 
 require_once( APP_GAMEMODULE_PATH.'module/table/table.game.php' );
@@ -22,8 +22,8 @@ require_once( APP_GAMEMODULE_PATH.'module/table/table.game.php' );
 
 class EclipticTravelers extends Table
 {
-	function __construct( )
-	{
+    function __construct( )
+    {
         // Your global variables labels:
         //  Here, you can assign labels to global variables you are using for this game.
         //  You can use any number of global variables with IDs between 10 and 99.
@@ -40,20 +40,24 @@ class EclipticTravelers extends Table
             //    "my_second_game_variant" => 101,
             //      ...
         ) );
-	}
+
+        // create instance specifying card module
+        $this->cards = self::getNew("module.common.deck");
+        $this->cards->init("cards"); // specify cards table and init
+    }
 
     protected function getGameName( )
     {
-		// Used for translations and stuff. Please do not modify.
+        // Used for translations and stuff. Please do not modify.
         return "ecliptictravelers";
     }
 
     /*
-        setupNewGame:
+      setupNewGame:
 
-        This method is called only once, when a new game is launched.
-        In this method, you must setup the game according to the game rules, so that
-        the game is ready to be played.
+      This method is called only once, when a new game is launched.
+      In this method, you must setup the game according to the game rules, so that
+      the game is ready to be played.
     */
     protected function setupNewGame( $players, $options = array() )
     {
@@ -89,6 +93,23 @@ class EclipticTravelers extends Table
 
         // TODO: setup the initial game situation here
 
+        $cards = [];
+
+        // FIXME: this depends on the number of players.
+        for ($cardNo = 1; $cardNo <= 31; $cardNo++) {
+            $cards[] = [
+                'type' => 0,
+                'type_arg' => $cardNo,
+                'nbr' => 1
+            ];
+        }
+
+        $this->cards->createCards($cards, 'deck');
+        $this->cards->shuffle('deck');
+
+        foreach ($players as $playerID => $player) {
+            $this->cards->pickCards(5, 'deck', $playerID);
+        }
 
         // Activate first player (which is in general a good idea :) )
         $this->activeNextPlayer();
@@ -97,19 +118,20 @@ class EclipticTravelers extends Table
     }
 
     /*
-        getAllDatas:
+      getAllDatas:
 
-        Gather all informations about current game situation (visible by the current player).
+      Gather all informations about current game situation (visible by the current player).
 
-        The method is called each time the game interface is displayed to a player, ie:
-        _ when the game starts
-        _ when a player refreshes the game page (F5)
+      The method is called each time the game interface is displayed to a player, ie:
+      _ when the game starts
+      _ when a player refreshes the game page (F5)
     */
     protected function getAllDatas()
     {
         $result = array();
 
-        $current_player_id = self::getCurrentPlayerId();    // !! We must only return informations visible by this player !!
+        // !! We must only return informations visible by this player !!
+        $current_player_id = self::getCurrentPlayerId();
 
         // Get information about players
         // Note: you can retrieve some extra field you added for "player" table in "dbmodel.sql" if you need it.
@@ -117,19 +139,24 @@ class EclipticTravelers extends Table
         $result['players'] = self::getCollectionFromDb( $sql );
 
         // TODO: Gather all information about current game situation (visible by player $current_player_id).
+        $currentPlayerID = self::getCurrentPlayerId();
+        $result['player_cards'] = array_values(
+            $this->cards->getCardsInLocation("hand", $currentPlayerID));
+        $result['table_cards'] = array_values(
+            $this->cards->getCardsInLocation("ontable"));
 
         return $result;
     }
 
     /*
-        getGameProgression:
+      getGameProgression:
 
-        Compute and return the current game progression.
-        The number returned must be an integer beween 0 (=the game just started) and
-        100 (= the game is finished or almost finished).
+      Compute and return the current game progression.
+      The number returned must be an integer beween 0 (=the game just started) and
+      100 (= the game is finished or almost finished).
 
-        This method is called each time we are in a game state with the "updateGameProgression" property set to true
-        (see states.inc.php)
+      This method is called each time we are in a game state with the "updateGameProgression" property set to true
+      (see states.inc.php)
     */
     function getGameProgression()
     {
@@ -139,127 +166,183 @@ class EclipticTravelers extends Table
     }
 
 
-//////////////////////////////////////////////////////////////////////////////
-//////////// Utility functions
-////////////
+    //////////////////////////////////////////////////////////////////////////////
+    //////////// Utility functions
+    ////////////
 
     /*
-        In this space, you can put any utility methods useful for your game logic
+      In this space, you can put any utility methods useful for your game logic
     */
 
 
 
-//////////////////////////////////////////////////////////////////////////////
-//////////// Player actions
-////////////
+    //////////////////////////////////////////////////////////////////////////////
+    //////////// Player actions
+    ////////////
 
     /*
-        Each time a player is doing some game action, one of the methods below is called.
-        (note: each method below must match an input method in ecliptictravelers.action.php)
+      Each time a player is doing some game action, one of the methods below is called.
+      (note: each method below must match an input method in ecliptictravelers.action.php)
     */
 
     /*
 
-    Example:
+      Example:
 
-    function playCard( $card_id )
+      function playCard( $card_id )
+      {
+      // Check that this is the player's turn and that it is a "possible action" at this game state (see states.inc.php)
+      self::checkAction( 'playCard' );
+
+      $player_id = self::getActivePlayerId();
+
+      // Add your game logic to play a card there
+      ...
+
+      // Notify all players about the card played
+      self::notifyAllPlayers( "cardPlayed", clienttranslate( '${player_name} plays ${card_name}' ), array(
+      'player_id' => $player_id,
+      'player_name' => self::getActivePlayerName(),
+      'card_name' => $card_name,
+      'card_id' => $card_id
+      ) );
+
+      }
+
+    */
+
+    function putCards($cardList)
     {
-        // Check that this is the player's turn and that it is a "possible action" at this game state (see states.inc.php)
-        self::checkAction( 'playCard' );
+        self::checkAction('playCard');
 
-        $player_id = self::getActivePlayerId();
+        $cardID = $cardList[0];
 
-        // Add your game logic to play a card there
-        ...
+        $cardInfo = $this->cards->getCard($cardID);
+        $actorID = self::getActivePlayerId();
 
-        // Notify all players about the card played
-        self::notifyAllPlayers( "cardPlayed", clienttranslate( '${player_name} plays ${card_name}' ), array(
-            'player_id' => $player_id,
+        if (!$cardInfo) {
+            self::notifyPlayer($actorID, 'logError', '' , [
+                'message' => clienttranslate('Invalid card selection! You cannot choose it.')
+            ]);
+            return;
+        }
+
+        if ($cardInfo['location'] != 'hand' ||
+            $cardInfo['location_arg'] != $actorID) {
+            self::notifyPlayer($actorID, 'logError', '', [
+                'message' => clienttranslate('Invalid card selection! You cannot choose it.')
+            ]);
+            return;
+        }
+
+        $this->cards->moveCard(
+            $cardID, 'ontable',
+            $this->cards->countCardInLocation('ontable') + 1);
+
+        self::notifyAllPlayers('puttingCard', clienttranslate('${player_name} put card.'), [
+            'player_id' => $actorID,
             'player_name' => self::getActivePlayerName(),
-            'card_name' => $card_name,
-            'card_id' => $card_id
-        ) );
+            'card' => $cardInfo
+        ]);
 
+        $this->gamestate->nextState('playCard');
     }
 
-    */
 
-
-//////////////////////////////////////////////////////////////////////////////
-//////////// Game state arguments
-////////////
+    //////////////////////////////////////////////////////////////////////////////
+    //////////// Game state arguments
+    ////////////
 
     /*
-        Here, you can create methods defined as "game state arguments" (see "args" property in states.inc.php).
-        These methods function is to return some additional information that is specific to the current
-        game state.
+      Here, you can create methods defined as "game state arguments" (see "args" property in states.inc.php).
+      These methods function is to return some additional information that is specific to the current
+      game state.
     */
 
     /*
 
-    Example for game state "MyGameState":
+      Example for game state "MyGameState":
 
-    function argMyGameState()
+      function argMyGameState()
+      {
+      // Get some values from the current game situation in database...
+
+      // return values:
+      return array(
+      'variable1' => $value1,
+      'variable2' => $value2,
+      ...
+      );
+      }
+    */
+
+    //////////////////////////////////////////////////////////////////////////////
+    //////////// Game state actions
+    ////////////
+
+    /*
+      Here, you can create methods defined as "game state actions" (see "action" property in states.inc.php).
+      The action method of state X is called everytime the current game state is set to X.
+    */
+
+    /*
+
+      Example for game state "MyGameState":
+
+      function stMyGameState()
+      {
+      // Do some stuff ...
+
+      // (very often) go to another gamestate
+      $this->gamestate->nextState( 'some_gamestate_transition' );
+      }
+    */
+    function stNextPlayer()
     {
-        // Get some values from the current game situation in database...
+        $lastPlayerID = self::getActivePlayerId();
 
-        // return values:
-        return array(
-            'variable1' => $value1,
-            'variable2' => $value2,
-            ...
-        );
+        $allData = self::getAllDatas();
+
+        foreach ($allData['players'] as $playerID => $player) {
+            if ($this->cards->countCardInLocation('hand', $lastPlayerID) <= 0) {
+                $this->gamestate->nextState('endGame');
+                return;
+            }
+        }
+
+        $playerID = self::activeNextPlayer();
+
+        self::giveExtraTime($playerID);
+        $this->gamestate->nextState('nextPlayer');
     }
-    */
 
-//////////////////////////////////////////////////////////////////////////////
-//////////// Game state actions
-////////////
 
-    /*
-        Here, you can create methods defined as "game state actions" (see "action" property in states.inc.php).
-        The action method of state X is called everytime the current game state is set to X.
-    */
+    //////////////////////////////////////////////////////////////////////////////
+    //////////// Zombie
+    ////////////
 
     /*
+      zombieTurn:
 
-    Example for game state "MyGameState":
+      This method is called each time it is the turn of a player who has quit the game (= "zombie" player).
+      You can do whatever you want in order to make sure the turn of this player ends appropriately
+      (ex: pass).
 
-    function stMyGameState()
-    {
-        // Do some stuff ...
-
-        // (very often) go to another gamestate
-        $this->gamestate->nextState( 'some_gamestate_transition' );
-    }
-    */
-
-//////////////////////////////////////////////////////////////////////////////
-//////////// Zombie
-////////////
-
-    /*
-        zombieTurn:
-
-        This method is called each time it is the turn of a player who has quit the game (= "zombie" player).
-        You can do whatever you want in order to make sure the turn of this player ends appropriately
-        (ex: pass).
-
-        Important: your zombie code will be called when the player leaves the game. This action is triggered
-        from the main site and propagated to the gameserver from a server, not from a browser.
-        As a consequence, there is no current player associated to this action. In your zombieTurn function,
-        you must _never_ use getCurrentPlayerId() or getCurrentPlayerName(), otherwise it will fail with a "Not logged" error message.
+      Important: your zombie code will be called when the player leaves the game. This action is triggered
+      from the main site and propagated to the gameserver from a server, not from a browser.
+      As a consequence, there is no current player associated to this action. In your zombieTurn function,
+      you must _never_ use getCurrentPlayerId() or getCurrentPlayerName(), otherwise it will fail with a "Not logged" error message.
     */
 
     function zombieTurn( $state, $active_player )
     {
-    	$statename = $state['name'];
+        $statename = $state['name'];
 
         if ($state['type'] === "activeplayer") {
             switch ($statename) {
-                default:
-                    $this->gamestate->nextState( "zombiePass" );
-                	break;
+            default:
+                $this->gamestate->nextState( "zombiePass" );
+                break;
             }
 
             return;
@@ -275,18 +358,18 @@ class EclipticTravelers extends Table
         throw new feException( "Zombie mode not supported at this game state: ".$statename );
     }
 
-///////////////////////////////////////////////////////////////////////////////////:
-////////// DB upgrade
-//////////
+    ///////////////////////////////////////////////////////////////////////////////////:
+    ////////// DB upgrade
+    //////////
 
     /*
-        upgradeTableDb:
+      upgradeTableDb:
 
-        You don't have to care about this until your game has been published on BGA.
-        Once your game is on BGA, this method is called everytime the system detects a game running with your old
-        Database scheme.
-        In this case, if you change your Database scheme, you just have to apply the needed changes in order to
-        update the game database and allow the game to continue to run with your new version.
+      You don't have to care about this until your game has been published on BGA.
+      Once your game is on BGA, this method is called everytime the system detects a game running with your old
+      Database scheme.
+      In this case, if you change your Database scheme, you just have to apply the needed changes in order to
+      update the game database and allow the game to continue to run with your new version.
 
     */
 
@@ -297,23 +380,23 @@ class EclipticTravelers extends Table
         // $from_version is equal to 1404301345
 
         // Example:
-//        if( $from_version <= 1404301345 )
-//        {
-//            // ! important ! Use DBPREFIX_<table_name> for all tables
-//
-//            $sql = "ALTER TABLE DBPREFIX_xxxxxxx ....";
-//            self::applyDbUpgradeToAllDB( $sql );
-//        }
-//        if( $from_version <= 1405061421 )
-//        {
-//            // ! important ! Use DBPREFIX_<table_name> for all tables
-//
-//            $sql = "CREATE TABLE DBPREFIX_xxxxxxx ....";
-//            self::applyDbUpgradeToAllDB( $sql );
-//        }
-//        // Please add your future database scheme changes here
-//
-//
+        //        if( $from_version <= 1404301345 )
+        //        {
+        //            // ! important ! Use DBPREFIX_<table_name> for all tables
+        //
+        //            $sql = "ALTER TABLE DBPREFIX_xxxxxxx ....";
+        //            self::applyDbUpgradeToAllDB( $sql );
+        //        }
+        //        if( $from_version <= 1405061421 )
+        //        {
+        //            // ! important ! Use DBPREFIX_<table_name> for all tables
+        //
+        //            $sql = "CREATE TABLE DBPREFIX_xxxxxxx ....";
+        //            self::applyDbUpgradeToAllDB( $sql );
+        //        }
+        //        // Please add your future database scheme changes here
+        //
+        //
 
 
     }

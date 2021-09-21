@@ -32,3 +32,13 @@
 
 -- Example 2: add a custom field to the standard "player" table
 -- ALTER TABLE `player` ADD `player_my_custom_field` INT UNSIGNED NOT NULL DEFAULT '0';
+
+
+-- All cards' state info.
+CREATE TABLE IF NOT EXISTS `cards` (
+  `card_id` INT(10) UNSIGNED NOT NULL PRIMARY KEY AUTO_INCREMENT,
+  `card_type` varchar(16) NOT NULL,
+  `card_type_arg` TINYINT UNSIGNED NOT NULL,
+  `card_location` VARCHAR(16) NOT NULL,
+  `card_location_arg` int(11)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 AUTO_INCREMENT=1;

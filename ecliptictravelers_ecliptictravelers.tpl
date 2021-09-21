@@ -28,6 +28,13 @@
 
 This is your game interface. You can edit this HTML in your ".tpl" file.
 
+<div id="player_hand" class="whitebloack">
+  <h3 id="inhand_header" style="display:table;width:100%;">
+    <span style="display:table-cell;">{IN_HAND}:</span>
+  </h3>
+  <div id="player_cards" class="card_inhand"></div>
+</div>
+
 
 <script type="text/javascript">
 

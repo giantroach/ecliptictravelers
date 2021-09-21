@@ -63,4 +63,18 @@ class action_ecliptictravelers extends APP_GameAction
 
     */
 
+    public function callPutCard()
+    {
+        self::setAjaxMode();
+        $numList = explode(',', self::getArg('cards', AT_numberlist, true));
+        $cardIDList = [];
+
+        foreach($numList as $pos => $numStr) {
+            $cardIDList[] = intval($numStr);
+        }
+
+        $this->game->putCards($cardIDList);
+        self::ajaxResponse();
+    }
+
 }
