@@ -2,7 +2,7 @@
 /**
  *------
  * BGA framework: © Gregory Isabelli <gisabelli@boardgamearena.com> & Emmanuel Colin <ecolin@boardgamearena.com>
- * EclipticTravelers implementation : © <Your name here> <Your email address here>
+ * EclipticTravelers implementation : © Tomoki Motohashi <tomoki.motohashi@takoashi.com>
  *
  * This code has been produced on the BGA studio platform for use on https://boardgamearena.com.
  * See http://en.doc.boardgamearena.com/Studio for more information.
@@ -27,15 +27,12 @@ class action_ecliptictravelers extends APP_GameAction
     // Constructor: please do not modify
     public function __default()
     {
-        if( self::isArg( 'notifwindow') )
-        {
+        if (self::isArg('notifwindow')) {
             $this->view = "common_notifwindow";
-            $this->viewArgs['table'] = self::getArg( "table", AT_posint, true );
-        }
-        else
-        {
+            $this->viewArgs['table'] = self::getArg("table", AT_posint, true);
+        } else {
             $this->view = "ecliptictravelers_ecliptictravelers";
-            self::trace( "Complete reinitialization of board game" );
+            self::trace("Complete reinitialization of board game");
         }
     }
 
@@ -63,17 +60,35 @@ class action_ecliptictravelers extends APP_GameAction
 
     */
 
-    public function callPutCard()
+    public function callPlayCard()
     {
         self::setAjaxMode();
+
         $numList = explode(',', self::getArg('cards', AT_numberlist, true));
         $cardIDList = [];
 
-        foreach($numList as $pos => $numStr) {
+        foreach ($numList as $pos => $numStr) {
             $cardIDList[] = intval($numStr);
         }
 
-        $this->game->putCards($cardIDList);
+        $this->game->playCards($cardIDList);
+        self::ajaxResponse();
+    }
+
+    public function callPass()
+    {
+        self::setAjaxMode();
+
+        $this->game->pass();
+        self::ajaxResponse();
+    }
+
+
+    public function callEclipse()
+    {
+        self::setAjaxMode();
+
+        $this->game->eclipse();
         self::ajaxResponse();
     }
 

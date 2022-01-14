@@ -1,7 +1,7 @@
 /**
  *------
  * BGA framework: © Gregory Isabelli <gisabelli@boardgamearena.com> & Emmanuel Colin <ecolin@boardgamearena.com>
- * EclipticTravelers implementation : © <Your name here> <Your email address here>
+ * EclipticTravelers implementation : © Tomoki Motohashi <tomoki.motohashi@takoashi.com>
  *
  * This code has been produced on the BGA studio platform for use on http://boardgamearena.com.
  * See http://en.boardgamearena.com/#!doc/Studio for more information.
@@ -15,8 +15,45 @@
  *
  */
 
-const appName = 'ecliptictraveler';
+const appName = 'ecliptictravelers';
 const reqBase = `/${appName}/${appName}`;
+const cardDef = [
+    {id: 1, time: 'md', location: 'c', river: '', break: false},
+    {id: 2, time: 'md', location: 'f', river: '', break: false},
+    {id: 3, time: 'md', location: 'f', river: '', break: false},
+    {id: 4, time: 'd', location: 'f', river: 'r', break: false},
+    {id: 5, time: 'd', location: 'f', river: 'r', break: false},
+    {id: 6, time: 'd', location: '', river: 'r', break: false},
+    {id: 7, time: 'tn', location: '', river: 'b', break: false},
+    {id: 8, time: 'd', location: '', river: 'b', break: true},
+
+    {id: 9, time: 'mn', location: 'c', river: '', break: false},
+    {id: 10, time: 'mn', location: 'f', river: '', break: false},
+    {id: 11, time: 'mn', location: 'f', river: '', break: false},
+    {id: 12, time: 'n', location: 'f', river: 'r', break: false},
+    {id: 13, time: 'n', location: 'f', river: 'r', break: false},
+    {id: 14, time: 'n', location: '', river: 'r', break: false},
+    {id: 15, time: 'td', location: '', river: 'b', break: false},
+    {id: 16, time: 'n', location: '', river: 'b', break: true},
+
+    {id: 17, time: 't', location: 'f', river: 'b', break: false},
+    {id: 18, time: 't', location: 'c', river: 'b', break: false},
+    {id: 19, time: 'd', location: 'c', river: 'r', break: false},
+    {id: 20, time: 'md', location: 'f', river: '', break: false},
+    {id: 21, time: 'd', location: 'f', river: 'b', break: false},
+    {id: 22, time: 'tn', location: '', river: 'r', break: false},
+    {id: 23, time: 'n', location: 'c', river: 'r', break: false},
+    {id: 24, time: 'mn', location: 'f', river: '', break: true},
+
+    {id: 25, time: 'n', location: 'f', river: 'b', break: false},
+    {id: 26, time: 'td', location: '', river: 'r', break: false},
+    {id: 27, time: 'd', location: 'f', river: 'r', break: false},
+    {id: 28, time: 'd', location: '', river: 'r', break: false},
+    {id: 29, time: 'n', location: 'f', river: 'r', break: false},
+    {id: 30, time: 'n', location: '', river: 'r', break: false},
+    {id: 31, time: 't', location: '', river: 'r', break: false},
+    {id: 32, time: '', location: '', river: '', break: false},
+];
 
 define([
     "dojo","dojo/_base/declare",
@@ -27,8 +64,6 @@ define([
 ], function (dojo, declare) {
     return declare("bgagame.ecliptictravelers", ebg.core.gamegui, {
         constructor: function(){
-            console.log('ecliptictravelers constructor');
-
             // Here, you can init the global variables of your user interface
             // Example:
             // this.myGlobalValue = 0;
@@ -48,28 +83,40 @@ define([
           "gamedatas" argument contains all datas retrieved by your "getAllDatas" PHP method.
         */
 
-        setup: function (gamedatas) {
-            console.log('Starting game setup', arguments);
+        playerHand: null,
+        commonTable: null,
+        eclipse: null,
 
+        setup: function (gamedatas) {
             // Setting up player boards
+            this.handCounters = {};
             for (let player_id in gamedatas.players) {
-                let player = gamedatas.players[player_id];
+                const player = gamedatas.players[player_id];
 
                 // TODO: Setting up players boards if needed
+
+                // create handsize counter per player
+                const elmPb = $(`player_board_${player_id}`);
+                dojo.place(
+                    this.format_block('jstpl_player_board', player), elmPb);
+                this.handCounters[player_id] = new ebg.counter();
+                this.handCounters[player_id].create(`hand-count_p${player_id}`);
+                this.handCounters[player_id].setValue(player.cards);
             }
 
             // TODO: Set up your game interface here, according to "gamedatas"
+            // setup player hand
             this.playerHand = new ebg.stock();
             this.playerHand.image_items_per_row = 8;
             this.playerHand.create(this, $('player_cards'),
                                    1104 / 8, 768 / 4);
             this.playerHand.centerItems = true;
             this.playerHand.setSelectionMode(0);
+            this.playerHand.setSelectionAppearance('class');
 
             for (let cardNo = 1; cardNo <= 31; cardNo++) {
                 this.playerHand.addItemType(
-                    cardNo, cardNo, g_gamethemeurl + 'img/cards.jpg', cardNo - 1
-                );
+                    cardNo, cardNo, g_gamethemeurl + 'img/cards.png', cardNo - 1);
             }
 
             for (let cardPos in gamedatas.player_cards) {
@@ -78,10 +125,62 @@ define([
                     card.type_arg, card.id, 'player_hand');
             }
 
+            dojo.connect(this.playerHand, 'onChangeSelection', this,
+                         'onCardSelect');
+
+            // setup table
+            this.commonTable = new ebg.stock();
+            this.commonTable.image_items_per_row = 8;
+            this.commonTable.create(this, $('table_cards'),
+                                   1104 / 8, 768 / 4);
+            this.commonTable.centerItems = true;
+            this.commonTable.item_margin = -115;
+            this.commonTable.setSelectionMode(0);
+
+            for (let cardNo = 1; cardNo <= 32; cardNo++) {
+                this.commonTable.addItemType(
+                    cardNo, null, g_gamethemeurl + 'img/cards.png', cardNo - 1);
+            }
+
+            const sortedTableCards  = gamedatas.table_cards.sort(
+                (a, b) => Number(a.location_arg) - Number(b.location_arg));
+            for (let cardPos in gamedatas.table_cards) {
+                const card = gamedatas.table_cards[cardPos];
+                this.commonTable.addToStockWithId(
+                    card.type_arg, card.id, 'common_table');
+            }
+
+            if (!this.commonTable.count()) {
+                // no card sign
+                this.commonTable.addToStockWithId(32, 32, 'common_table');
+            }
+
+            // eclipse cards
+            this.eclipse = new ebg.stock();
+            this.eclipse.image_items_per_row = 2;
+            this.eclipse.create(this, $('eclipse_cards'),
+                                384 / 2, 138);
+            // this.eclipse.centerItems = true;
+            this.eclipse.setSelectionMode(0);
+            this.eclipse.setSelectionAppearance('class');
+            for (let cardNo = 1; cardNo <= 2; cardNo++) {
+                this.eclipse.addItemType(
+                    cardNo, null, g_gamethemeurl + 'img/eclipse.png', cardNo - 1);
+            }
+            if (!gamedatas.eclipse) {
+                this.eclipse.addToStockWithId(1, 1, 'eclipse_cards');
+            } else {
+                this.eclipse.addToStockWithId(2, 1, 'eclipse_cards');
+                this.appendEclipsedImg(Number(gamedatas.eclipse));
+            }
+            dojo.connect(this.eclipse, 'onChangeSelection', this,
+                         'onEclipseSelect');
+
+            // update background image
+            this.refreshBgImg();
+
             // Setup game notifications to handle (see "setupNotifications" method below)
             this.setupNotifications();
-
-            console.log( "Ending game setup" );
         },
 
 
@@ -92,8 +191,6 @@ define([
         //                  You can use this method to perform some user interface changes at this moment.
         //
         onEnteringState: function (stateName, args) {
-            console.log( 'Entering state: '+stateName );
-
             switch (stateName) {
 
                 /* Example:
@@ -109,6 +206,8 @@ define([
             case 'playerTurn':
                 if (this.isCurrentPlayerActive()) {
                     this.playerHand.setSelectionMode(1);
+                    this.updateHandStyle();
+                    this.updateEclipseStyle();
                 }
                 break;
 
@@ -121,8 +220,6 @@ define([
         //                 You can use this method to perform some user interface changes at this moment.
         //
         onLeavingState: function (stateName) {
-            console.log( 'Leaving state: '+stateName );
-
             switch (stateName) {
 
                 /* Example:
@@ -137,6 +234,9 @@ define([
 
             case 'playerTurn':
                 this.playerHand.setSelectionMode(0);
+                this.disableHandStyle();
+                this.eclipse.setSelectionMode(0);
+                this.disableEclipseStyle();
                 break;
 
             case 'dummmy':
@@ -148,8 +248,6 @@ define([
         //                        action status bar (ie: the HTML links in the status bar).
         //
         onUpdateActionButtons: function (stateName, args) {
-            console.log( 'onUpdateActionButtons: '+stateName );
-
             if (this.isCurrentPlayerActive()) {
                 switch (stateName) {
                     /*
@@ -167,10 +265,17 @@ define([
 
                 case 'playerTurn':
                     if (this.isCurrentPlayerActive()) {
+                        // TODO: check if there are any playable card
                         this.addActionButton(
-                            'putCard_button', // id
-                            _('Put selected card.'), // translate (button label)
-                            'onPutCard' // name of call back
+                            'playCard_button', // id
+                            _('Play selected card.'), // translate (button label)
+                            'onPlayCard' // name of call back
+                        );
+
+                        this.addActionButton(
+                            'pass_button', // id
+                            _('Pass'), // translate (button label)
+                            'onPass' // name of call back
                         );
                     }
                     break;
@@ -187,6 +292,237 @@ define([
           script.
 
         */
+
+        updateHandStyle: function () {
+            const tCardID = Number(this.commonTable.items[this.commonTable.items.length - 1].type);
+            const pCardID = this.commonTable.items.length < 2 ? null :
+                  Number(this.commonTable.items[this.commonTable.items.length - 2].type);
+            this.playerHand.items.forEach((i) => {
+                const hCardID = Number(this.playerHand.getItemById(i.id).type);
+                const elm = $(`player_cards_item_${i.id}`);
+                const cls = elm.className;
+                if (this.isCardPlayable(tCardID, hCardID, pCardID, this.isEclipsed())) {
+                    elm.className = cls.replace(/ ecliptictravelers-unplayable/g, '') + ' ecliptictravelers-playable';
+                } else {
+                    elm.className = cls.replace(/ ecliptictravelers-playable/g, '') + ' ecliptictravelers-unplayable';
+                }
+            });
+        },
+
+        disableHandStyle: function () {
+            this.playerHand.items.forEach((i) => {
+                const elm = $(`player_cards_item_${i.id}`);
+                const cls = elm.className;
+                elm.className = cls.replace(/ ecliptictravelers-playable/g, '') + ' ecliptictravelers-unplayable';
+            });
+        },
+
+        updateEclipseStyle: function () {
+            if (this.isEclipsePlayable()) {
+                const elm = $(`eclipse_cards_item_1`);
+                const cls = elm.className;
+                elm.className = cls.replace(/ ecliptictravelers-unplayable/g, '') + ' ecliptictravelers-playable';
+                this.eclipse.setSelectionMode(1);
+                return;
+            }
+            this.eclipse.setSelectionMode(0);
+        },
+
+        disableEclipseStyle: function () {
+            const elm = $(`eclipse_cards_item_1`);
+            const cls = elm.className;
+            elm.className = cls.replace(/ ecliptictravelers-playable/g, '') + ' ecliptictravelers-unplayable';
+            this.eclipse.setSelectionMode(0);
+        },
+
+        isCardPlayable: function (cFrom, cTo, cPrev = null, eclipsed = false) {
+            const f = cardDef.find((c) => c.id === cFrom);
+            const t = cardDef.find((c) => c.id === cTo);
+            const p = cardDef.find((c) => c.id === cPrev);
+
+            let ft = f.time;
+            if (eclipsed) {
+                switch (f.time) {
+                case 'd':
+                    ft = 'n';
+                    break;
+                case 'md':
+                    ft = 'mn';
+                    break;
+                case 'n':
+                    ft = 'd';
+                    break;
+                case 'mn':
+                    ft = 'md';
+                    break;
+                }
+            }
+
+            { // time
+                if (ft === 'd') {
+                    if (['n', 'mn', 'td'].includes(t.time)) {
+                        return false;
+                    }
+                }
+                if (ft === 'md') {
+                    if (['n', 'mn', 'td', 'tn', 't'].includes(t.time)) {
+                        return false;
+                    }
+                }
+                if (ft === 'n') {
+                    if (['d', 'dn', 'tn'].includes(t.time)) {
+                        return false;
+                    }
+                }
+                if (ft === 'mn') {
+                    if (['d', 'md', 'td', 'tn', 't'].includes(t.time)) {
+                        return false;
+                    }
+                }
+                if (ft === 'tn') {
+                    if (['d', 'md', 'td', 'tn', 't'].includes(t.time)) {
+                        return false;
+                    }
+                }
+                if (ft === 'td') {
+                    if (['n', 'mn', 'td', 'tn', 't'].includes(t.time)) {
+                        return false;
+                    }
+                }
+                if (ft === 't') {
+                    if (p && p.time === 'd' &&
+                        ['d', 'md', 'td', 'tn', 't'].includes(t.time)) {
+                        return false;
+                    }
+                    if (p && p.time === 'n' &&
+                        ['n', 'mn', 'td', 'tn', 't'].includes(t.time)) {
+                        return false;
+                    }
+                    if (!p &&
+                        ['td', 'tn', 't'].includes(t.time)) {
+                        return false;
+                    }
+                }
+            }
+
+            { // location
+                if (f.location === 'f') {
+                    if (['c'].includes(t.location)) {
+                        return false;
+                    }
+                }
+                if (f.location === 'c') {
+                    if (['f'].includes(t.location)) {
+                        return false;
+                    }
+                }
+            }
+
+            { // river
+                if (f.river === 'r') {
+                    if ([''].includes(t.river)) {
+                        return false;
+                    }
+                }
+                if (f.river === 'b') {
+                    if (['r'].includes(t.river)) {
+                        return false;
+                    }
+                }
+            }
+
+            return true;
+        },
+
+        isEclipsePlayable: function () {
+            const cFrom = Number(this.commonTable.items[this.commonTable.items.length - 1].type);
+
+            // if no card is on the table
+            if (cFrom === 32) {
+                return false;
+            }
+
+            // if eclipse is already used
+            if (this.eclipse.items[0].type === 2) {
+                return false;
+            }
+
+            // if transition is on the top
+            const f = cardDef.find((c) => c.id === cFrom);
+            if (['t', 'tn', 'td'].includes(f.time)) {
+                return false;
+            }
+
+            return true;
+        },
+
+        isEclipsed: function () {
+            if (this.eclipse.items[0].type === 1) {
+                return false;
+            }
+
+            const id = this.commonTable.items[this.commonTable.items.length - 1].id;
+            const elm = $(`table_cards_item_${id}`);
+            if (!elm.children.length) {
+                return false;
+            }
+
+            return true;
+        },
+
+        appendEclipsedImg: function (idx) {
+            if (this.commonTable.count() === idx) {
+                const id = this.commonTable.items[this.commonTable.items.length - 1].id;
+                const elm = $(`table_cards_item_${id}`);
+                const eclipseElm = document.createElement('div');
+                eclipseElm.className = 'ecliptictravelers-eclipsed';
+                eclipseElm.style.backgroundImage = `url(${g_gamethemeurl}img/eclipsed.png)`;
+                elm.appendChild(eclipseElm);
+            }
+        },
+
+        refreshBgImg: function () {
+            const cFrom = Number(this.commonTable.items[this.commonTable.items.length - 1].type);
+            const eclipsed = this.isEclipsed();
+            const f = cardDef.find((c) => c.id === cFrom);
+
+            let ft = f.time;
+            if (eclipsed) {
+                switch (f.time) {
+                case 'd':
+                    ft = 'n';
+                    break;
+                case 'md':
+                    ft = 'mn';
+                    break;
+                case 'n':
+                    ft = 'd';
+                    break;
+                case 'mn':
+                    ft = 'md';
+                    break;
+                }
+            }
+
+            switch (ft) {
+            case 'd':
+            case 'md':
+                document.body.style.backgroundImage = `url(${g_gamethemeurl}img/bg_day.jpg)`;
+                break;
+            case 'n':
+            case 'mn':
+                document.body.style.backgroundImage = `url(${g_gamethemeurl}img/bg_night.jpg)`;
+                break;
+            case 'tn':
+            case 'td':
+            case 't':
+                document.body.style.backgroundImage = `url(${g_gamethemeurl}img/bg_sunset.jpg)`;
+                break;
+            default:
+                document.body.style.backgroundImage = '';
+                break;
+            }
+        },
 
 
         ///////////////////////////////////////////////////
@@ -237,6 +573,79 @@ define([
 
         */
 
+        onCardSelect: function (controlName, itemID) {
+            if (!itemID) { return; }
+            this.eclipse.unselectAll();
+            const tCardID = Number(this.commonTable.items[this.commonTable.items.length - 1].type);
+            const hCardID = Number(this.playerHand.getItemById(itemID).type);
+            const pCardID = this.commonTable.items.length < 2 ? null :
+                  Number(this.commonTable.items[this.commonTable.items.length - 2].type);
+            if (!this.isCardPlayable(tCardID, hCardID, pCardID, this.isEclipsed())) {
+                this.playerHand.unselectAll();
+            }
+        },
+
+        onEclipseSelect: function (controlName, itemID) {
+            if (!itemID) { return; }
+            this.playerHand.unselectAll();
+            if (!this.isEclipsePlayable()) {
+                this.eclipse.unselectAll();
+            }
+        },
+
+        onPlayCard: function (evt) {
+            dojo.stopEvent(evt);
+
+            const hSelected = this.playerHand.getSelectedItems();
+            const eSelected = this.eclipse.getSelectedItems();
+
+            if (hSelected.length <= 0 && eSelected.length <= 0) {
+                this.showMessage(_('No card is selected.'), 'error');
+                return;
+            }
+
+            if (eSelected.length) {
+                const eclUrl = `${reqBase}/callEclipse.html`;
+                this.ajaxcall(eclUrl, {
+                    lock: true
+
+                }, this, (result) => {
+                    // console.log('success: onEclipse', arguments);
+
+                }, (is_error) => {
+                    // console.log('error: onEclipse', arguments);
+                });
+                return;
+            }
+
+            const plyUrl = `${reqBase}/callPlayCard.html`;
+            this.ajaxcall(plyUrl, {
+                lock: true,
+                cards: hSelected.map(card => card.id).join(',')
+
+            }, this, (result) => {
+                // console.log('success: onPlayCard', arguments);
+
+            }, (is_error) => {
+                // console.log('error: onPlayCard', arguments);
+            });
+        },
+
+        onPass: function (evt) {
+            dojo.stopEvent(evt);
+
+            const url = `${reqBase}/callPass.html`;
+            this.ajaxcall(url, {
+                lock: true
+
+            }, this, (result) => {
+                // console.log('success: onPlayCard', arguments);
+
+            }, (is_error) => {
+                // console.log('error: onPlayCard', arguments);
+            });
+        },
+
 
         ///////////////////////////////////////////////////
         //// Reaction to cometD notifications
@@ -250,11 +659,14 @@ define([
           your ecliptictravelers.game.php file.
 
         */
-        setupNotifications: function () {
-            console.log( 'notifications subscriptions setup' );
-
+        setupNotifications: function() {
             // TODO: here, associate your game notifications with local methods
-            dojo.subscribe('puttingCard', this, 'notifyPuttingCard');
+            dojo.subscribe('playCards', this, 'notifyPlayCard');
+            dojo.subscribe('playBreakCard', this, 'notifyPlayBreakCard');
+            dojo.subscribe('break', this, 'notifyBreak');
+            dojo.subscribe('eclipsed', this, 'notifyEclipsed');
+            dojo.subscribe('newRound', this, 'notifyNewRound');
+            dojo.subscribe('endGame', this, 'notifyEndGame');
 
             // Example 1: standard notification handling
             // dojo.subscribe( 'cardPlayed', this, "notif_cardPlayed" );
@@ -284,33 +696,95 @@ define([
 
         */
 
-        notifyPuttingCard: function (notify) {
-            console.log('notifyPuttingCard', arguments);
-            if (notify.args.player_id === this.getActivePlayerId()) {
-                this.playerHand.removeFromStockById(notify.args.card.id);
+        notifyPlayCard: function (notify) {
+            const card = notify.args.card;
+            this.playerHand.removeFromStockById(card.id);
+
+            if (this.commonTable.items.length &&
+                this.commonTable.items[0].type === 32) {
+                this.commonTable.removeAll();
             }
+            this.commonTable.addToStockWithId(
+                card.type_arg, card.id, 'common_table');
+
+            // update hand size
+            this.handCounters[notify.args.player_id]
+                .setValue(Number(notify.args.cards));
+
+            this.refreshBgImg();
         },
 
-        onPutCard: function(evt) {
-            console.log('onPutCard', arguments);
-            dojo.stopEvent(evt);
+        notifyPlayBreakCard: function (notify) {
+            const card = notify.args.card;
+            this.playerHand.removeFromStockById(card.id);
 
-            let selected = this.playerHand.getSelectedItems();
-            if (selected.length <= 0) {
-                this.showMessage(_('No cards are selected.'), 'error');
-                return;
+            this.commonTable.removeAll();
+            this.commonTable.addToStockWithId(32, 32, 'common_table');
+
+            // update hand size
+            this.handCounters[notify.args.player_id]
+                .setValue(Number(notify.args.cards));
+
+            this.eclipse.removeAll();
+            this.eclipse.addToStockWithId(1, 1, 'eclipse_cards');
+            this.refreshBgImg();
+        },
+
+        notifyBreak: function (notify) {
+            this.commonTable.removeAll();
+            this.commonTable.addToStockWithId(32, 32, 'common_table');
+            this.eclipse.removeAll();
+            this.eclipse.addToStockWithId(1, 1, 'eclipse_cards');
+            this.refreshBgImg();
+        },
+
+        notifyEclipsed: function (notify) {
+            const eclipse = notify.args.location_arg;
+            this.appendEclipsedImg(Number(eclipse));
+            this.eclipse.removeAll();
+            this.eclipse.addToStockWithId(2, 1, 'eclipse_cards');
+            this.refreshBgImg();
+        },
+
+        notifyNewRound: function (notify) {
+            const scoredPlayerID = notify.args.scoredPlayerID;
+            const cards = notify.args.player_cards;
+            const players = notify.args.players;
+
+            // refresh table
+            this.commonTable.removeAll();
+            this.commonTable.addToStockWithId(32, 32, 'common_table');
+
+            // refresh hand
+            this.playerHand.removeAll();
+            cards.forEach((card) => {
+                this.playerHand.addToStockWithId(
+                    card.type_arg, card.id, 'player_hand');
+            });
+
+            // update hand size
+            for (let player_id in players) {
+                const player = players[player_id];
+                this.handCounters[player_id].setValue(player.cards);
             }
 
-            this.ajaxcall(`${reqBase}/callPutCard.html`, {
-                lock: true,
-                cards: selected.map(card => card.id).join(',')
+            // refresh eclipse
+            const eclipse = notify.args.location_arg;
+            this.appendEclipsedImg(Number(eclipse));
+            this.eclipse.removeAll();
+            this.eclipse.addToStockWithId(1, 1, 'eclipse_cards');
 
-            }, this, (result) => {
-                console.log('success: onPutCard', arguments);
+            // increment score
+            this.scoreCtrl[scoredPlayerID].incValue(1);
 
-            }, (is_error) => {
-                console.log('error: onPutCard', arguments);
-            });
+            this.refreshBgImg();
+        },
+
+        notifyEndGame: function (notify) {
+            const scoredPlayerID = notify.args.player_id;
+
+            // increment score
+            this.scoreCtrl[scoredPlayerID].incValue(1);
         }
 
     });

@@ -1,7 +1,7 @@
 
 -- ------
 -- BGA framework: © Gregory Isabelli <gisabelli@boardgamearena.com> & Emmanuel Colin <ecolin@boardgamearena.com>
--- EclipticTravelers implementation : © <Your name here> <Your email address here>
+-- EclipticTravelers implementation : © Tomoki Motohashi <tomoki.motohashi@takoashi.com>
 --
 -- This code has been produced on the BGA studio platform for use on http://boardgamearena.com.
 -- See http://en.boardgamearena.com/#!doc/Studio for more information.
@@ -42,3 +42,5 @@ CREATE TABLE IF NOT EXISTS `cards` (
   `card_location` VARCHAR(16) NOT NULL,
   `card_location_arg` int(11)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 AUTO_INCREMENT=1;
+
+ALTER TABLE `player` ADD `player_passed` SMALLINT UNSIGNED NOT NULL DEFAULT '0';

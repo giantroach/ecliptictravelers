@@ -1,2 +1,0 @@
-# ecliptictravelers
-BGA studio app

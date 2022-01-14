@@ -1,7 +1,7 @@
 /**
  *------
  * BGA framework: © Gregory Isabelli <gisabelli@boardgamearena.com> & Emmanuel Colin <ecolin@boardgamearena.com>
- * EclipticTravelers implementation : © <Your name here> <Your email address here>
+ * EclipticTravelers implementation : © Tomoki Motohashi <tomoki.motohashi@takoashi.com>
  *
  * This code has been produced on the BGA studio platform for use on http://boardgamearena.com.
  * See http://en.boardgamearena.com/#!doc/Studio for more information.
@@ -66,3 +66,79 @@
         background-repeat: none;
     }
 */
+
+
+body {
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-color: #647b8a;
+}
+
+.player_board_content {
+    display: flex;
+}
+.player_board_content > div {
+    flex: 1 1 auto;
+}
+#common_table {
+    height: 220px;
+    background-color: rgba(255,255,255,0.5);
+    border-radius: 10px;
+    padding: 5px;
+    margin-bottom: 10px;
+}
+.ecliptictravelers-table-cards {
+    display: flex;
+}
+#table_cards {
+    margin-left: -60px;
+    flex: 1 1 50%;
+}
+.eclipse-wrapper {
+    display: flex;
+    flex-direction: column;
+    flex: 1 0 192px;
+    height: 192px;
+    justify-content: center;
+}
+#player_hand {
+    background-color: rgba(0,0,0,0.5);
+    border-radius: 10px;
+    padding: 5px;
+}
+#player_hand > h3 {
+    color: white;
+}
+.ecliptictravelers-hand-size {
+    display: flex;
+    flex-direction: column;
+    justify-content: end;
+}
+
+.ecliptictravelers-table-cards .stockitem {
+    box-shadow: 0px 0px 4px 4px rgb(0 0 0 / 25%);
+    border-radius: 10px;
+}
+.player_cards .stockitem {
+    border-radius: 10px;
+}
+.stockitem_selected {
+    border: 2px solid yellow!important;
+    box-shadow: 0px 0px 10px yellow!important;
+    border-radius: 10px;
+}
+.stockitem.ecliptictravelers-playable{
+    border: 2px solid #80c080;
+    box-shadow: 0px 0px 10px #80ff80;
+    border-radius: 10px;
+}
+.stockitem.ecliptictravelers-unplayable{
+    border: 2px solid #555;
+    border-radius: 10px;
+}
+.stockitem .ecliptictravelers-eclipsed {
+    width: 138px;
+    height: 192px;
+    background-repeat: no-repeat;
+    background-position: center;
+}

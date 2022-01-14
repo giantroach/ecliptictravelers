@@ -2,7 +2,7 @@
 /**
  *------
  * BGA framework: © Gregory Isabelli <gisabelli@boardgamearena.com> & Emmanuel Colin <ecolin@boardgamearena.com>
- * EclipticTravelers implementation : © <Your name here> <Your email address here>
+ * EclipticTravelers implementation : © Tomoki Motohashi <tomoki.motohashi@takoashi.com>
  *
  * This code has been produced on the BGA studio platform for use on http://boardgamearena.com.
  * See http://en.boardgamearena.com/#!doc/Studio for more information.
@@ -24,21 +24,23 @@
  *
  */
 
-  require_once( APP_BASE_PATH."view/common/game.view.php" );
+require_once(APP_BASE_PATH . "view/common/game.view.php");
 
-  class view_ecliptictravelers_ecliptictravelers extends game_view
-  {
-    function getGameName() {
+class view_ecliptictravelers_ecliptictravelers extends game_view
+{
+    function getGameName()
+    {
         return "ecliptictravelers";
     }
-  	function build_page( $viewArgs )
-  	{
-  	    // Get players & players number
+    function build_page($viewArgs)
+    {
+        // Get players & players number
         $players = $this->game->loadPlayersBasicInfos();
-        $players_nbr = count( $players );
+        $players_nbr = count($players);
 
         /*********** Place your code below:  ************/
-
+        $this->tpl['IN_HAND'] = self::_("My hand");
+        $this->tpl['ON_TABLE'] = self::_("Table");
 
         /*
 
@@ -67,11 +69,11 @@
         $this->page->begin_block( "ecliptictravelers_ecliptictravelers", "myblock" );
         foreach( $players as $player )
         {
-            $this->page->insert_block( "myblock", array(
-                                                    "PLAYER_NAME" => $player['player_name'],
-                                                    "SOME_VARIABLE" => $some_value
-                                                    ...
-                                                     ) );
+        $this->page->insert_block( "myblock", array(
+        "PLAYER_NAME" => $player['player_name'],
+        "SOME_VARIABLE" => $some_value
+        ...
+        ) );
         }
 
         */
@@ -79,5 +81,5 @@
 
 
         /*********** Do not change anything below this line  ************/
-  	}
-  }
+    }
+}
