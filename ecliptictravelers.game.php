@@ -271,7 +271,7 @@ class EclipticTravelers extends Table
             }
         }
         if ($ft == 'n') {
-            if (in_array($t->time, ['d', 'dn', 'tn'])) {
+            if (in_array($t->time, ['d', 'md', 'tn'])) {
                 return false;
             }
         }
