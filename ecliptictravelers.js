@@ -370,7 +370,7 @@ define([
                     }
                 }
                 if (ft === 'n') {
-                    if (['d', 'dn', 'tn'].includes(t.time)) {
+                    if (['d', 'md', 'tn'].includes(t.time)) {
                         return false;
                     }
                 }
