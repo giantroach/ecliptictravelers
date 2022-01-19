@@ -58,7 +58,7 @@ $this->card_types = [
     (object) ["id" => "21", "time" => "d", "location" => "f", "river" => "b", "break" => false],
     (object) ["id" => "22", "time" => "tn", "location" => "", "river" => "r", "break" => false],
     (object) ["id" => "23", "time" => "n", "location" => "c", "river" => "r", "break" => false],
-    (object) ["id" => "24", "time" => "mn", "location" => "f", "river" => "", "break" => true],
+    (object) ["id" => "24", "time" => "mn", "location" => "f", "river" => "", "break" => false],
 
     (object) ["id" => "25", "time" => "n", "location" => "f", "river" => "b", "break" => false],
     (object) ["id" => "26", "time" => "td", "location" => "", "river" => "r", "break" => false],

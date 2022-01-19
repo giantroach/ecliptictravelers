@@ -43,7 +43,7 @@ const cardDef = [
     {id: 21, time: 'd', location: 'f', river: 'b', break: false},
     {id: 22, time: 'tn', location: '', river: 'r', break: false},
     {id: 23, time: 'n', location: 'c', river: 'r', break: false},
-    {id: 24, time: 'mn', location: 'f', river: '', break: true},
+    {id: 24, time: 'mn', location: 'f', river: '', break: false},
 
     {id: 25, time: 'n', location: 'f', river: 'b', break: false},
     {id: 26, time: 'td', location: '', river: 'r', break: false},
@@ -370,7 +370,7 @@ define([
                     }
                 }
                 if (ft === 'n') {
-                    if (['d', 'dn', 'tn'].includes(t.time)) {
+                    if (['d', 'md', 'tn'].includes(t.time)) {
                         return false;
                     }
                 }
