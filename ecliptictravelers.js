@@ -65,8 +65,7 @@ define([
     let seqProc = Promise.resolve();
     const toSeqProc = (func, that, delay = 1000) => {
         return (arg) => {
-            // Make the Promise pending
-            seqProc = Promise.all([seqProc]).then(() => {
+            seqProc = seqProc.then(() => {
                 return new Promise((resolve) => {
                     func.call(that, arg);
                     setTimeout(() => {
