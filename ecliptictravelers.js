@@ -62,6 +62,21 @@ define([
     "ebg/stock"
 
 ], function (dojo, declare) {
+    let seqProc = Promise.resolve();
+    const toSeqProc = (func, that, delay = 1000) => {
+        return (arg) => {
+            // Make the Promise pending
+            seqProc = Promise.all([seqProc]).then(() => {
+                return new Promise((resolve) => {
+                    func.call(that, arg);
+                    setTimeout(() => {
+                        resolve();
+                    }, delay);
+                });
+            });
+        };
+    };
+
     return declare("bgagame.ecliptictravelers", ebg.core.gamegui, {
         constructor: function(){
             // Here, you can init the global variables of your user interface
@@ -205,9 +220,14 @@ define([
 
             case 'playerTurn':
                 if (this.isCurrentPlayerActive()) {
-                    this.playerHand.setSelectionMode(1);
-                    this.updateHandStyle();
-                    this.updateEclipseStyle();
+                    // this called before other events like `break`
+                    setTimeout(() => {
+                        seqProc.then(() => {
+                            this.playerHand.setSelectionMode(1);
+                            this.updateHandStyle();
+                            this.updateEclipseStyle();
+                        });
+                    }, 1000); // wait for other following events
                 }
                 break;
 
@@ -265,18 +285,20 @@ define([
 
                 case 'playerTurn':
                     if (this.isCurrentPlayerActive()) {
-                        // TODO: check if there are any playable card
-                        this.addActionButton(
-                            'playCard_button', // id
-                            _('Play selected card.'), // translate (button label)
-                            'onPlayCard' // name of call back
-                        );
+                        seqProc.then(() => {
+                            // TODO: check if there are any playable card
+                            this.addActionButton(
+                                'playCard_button', // id
+                                _('Play selected card.'), // translate (button label)
+                                'onPlayCard' // name of call back
+                            );
 
-                        this.addActionButton(
-                            'pass_button', // id
-                            _('Pass'), // translate (button label)
-                            'onPass' // name of call back
-                        );
+                            this.addActionButton(
+                                'pass_button', // id
+                                _('Pass'), // translate (button label)
+                                'onPass' // name of call back
+                            );
+                        });
                     }
                     break;
                 }
@@ -661,12 +683,12 @@ define([
         */
         setupNotifications: function() {
             // TODO: here, associate your game notifications with local methods
-            dojo.subscribe('playCards', this, 'notifyPlayCard');
-            dojo.subscribe('playBreakCard', this, 'notifyPlayBreakCard');
-            dojo.subscribe('break', this, 'notifyBreak');
-            dojo.subscribe('eclipsed', this, 'notifyEclipsed');
-            dojo.subscribe('newRound', this, 'notifyNewRound');
-            dojo.subscribe('endGame', this, 'notifyEndGame');
+            dojo.subscribe('playCards', this, toSeqProc(this.notifyPlayCard, this, 2000));
+            dojo.subscribe('playBreakCard', this, toSeqProc(this.notifyPlayBreakCard, this, 3000));
+            dojo.subscribe('break', this, toSeqProc(this.notifyBreak, this));
+            dojo.subscribe('eclipsed', this, toSeqProc(this.notifyEclipsed, this));
+            dojo.subscribe('newRound', this, toSeqProc(this.notifyNewRound, this));
+            dojo.subscribe('endGame', this, toSeqProc(this.notifyEndGame, this));
 
             // Example 1: standard notification handling
             // dojo.subscribe( 'cardPlayed', this, "notif_cardPlayed" );
@@ -718,16 +740,27 @@ define([
             const card = notify.args.card;
             this.playerHand.removeFromStockById(card.id);
 
-            this.commonTable.removeAll();
-            this.commonTable.addToStockWithId(32, 32, 'common_table');
+            // first, show the break card
+            if (this.commonTable.items.length &&
+                this.commonTable.items[0].type === 32) {
+                this.commonTable.removeAll();
+            }
+            this.commonTable.addToStockWithId(
+                card.type_arg, card.id, 'common_table');
 
-            // update hand size
-            this.handCounters[notify.args.player_id]
-                .setValue(Number(notify.args.cards));
+            // now remove all from the table
+            setTimeout(() => {
+                this.commonTable.removeAll();
+                this.commonTable.addToStockWithId(32, 32, 'common_table');
 
-            this.eclipse.removeAll();
-            this.eclipse.addToStockWithId(1, 1, 'eclipse_cards');
-            this.refreshBgImg();
+                // update hand size
+                this.handCounters[notify.args.player_id]
+                    .setValue(Number(notify.args.cards));
+
+                this.eclipse.removeAll();
+                this.eclipse.addToStockWithId(1, 1, 'eclipse_cards');
+                this.refreshBgImg();
+            }, 2000);
         },
 
         notifyBreak: function (notify) {
