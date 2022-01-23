@@ -215,7 +215,7 @@ class EclipticTravelers extends Table
       In this space, you can put any utility methods useful for your game logic
     */
 
-    function clearTable()
+    function clearTable($notify)
     {
         $this->cards->moveAllCardsInLocation(
             'ontable',
@@ -225,7 +225,9 @@ class EclipticTravelers extends Table
             'eclipseUsed',
             'eclipseUnused'
         );
-        self::notifyAllPlayers('break', clienttranslate('Let\'s have a break!'), []);
+        if ($notify) {
+            self::notifyAllPlayers('break', clienttranslate('Let\'s have a break!'), []);
+        }
     }
 
     function isCardPlayable($cFrom, $cTo, $cPrev = null, $eclipsed = false)
@@ -442,7 +444,7 @@ class EclipticTravelers extends Table
                 'card' => $cardInfo,
                 'cards' => $numberOfcards
             ]);
-            $result = self::clearTable();
+            self::clearTable(false);
 
         } else {
             self::notifyAllPlayers('playCards', clienttranslate('${player_name} played a card.'), [
@@ -474,7 +476,7 @@ class EclipticTravelers extends Table
         $notPassedPlayers = self::getCollectionFromDb($sql);
         $notPassedPlayersCount = count($notPassedPlayers);
         if ($notPassedPlayersCount <= 1) {
-            $result = self::clearTable();
+            $result = self::clearTable(true);
             self::DbQuery("UPDATE player SET player_passed=0");
         }
 
