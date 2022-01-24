@@ -285,13 +285,6 @@ define([
                 case 'playerTurn':
                     if (this.isCurrentPlayerActive()) {
                         seqProc.then(() => {
-                            // TODO: check if there are any playable card
-                            this.addActionButton(
-                                'playCard_button', // id
-                                _('Play selected card.'), // translate (button label)
-                                'onPlayCard' // name of call back
-                            );
-
                             this.addActionButton(
                                 'pass_button', // id
                                 _('Pass'), // translate (button label)
@@ -603,39 +596,13 @@ define([
                   Number(this.commonTable.items[this.commonTable.items.length - 2].type);
             if (!this.isCardPlayable(tCardID, hCardID, pCardID, this.isEclipsed())) {
                 this.playerHand.unselectAll();
-            }
-        },
-
-        onEclipseSelect: function (controlName, itemID) {
-            if (!itemID) { return; }
-            this.playerHand.unselectAll();
-            if (!this.isEclipsePlayable()) {
-                this.eclipse.unselectAll();
-            }
-        },
-
-        onPlayCard: function (evt) {
-            dojo.stopEvent(evt);
-
-            const hSelected = this.playerHand.getSelectedItems();
-            const eSelected = this.eclipse.getSelectedItems();
-
-            if (hSelected.length <= 0 && eSelected.length <= 0) {
-                this.showMessage(_('No card is selected.'), 'error');
                 return;
             }
 
-            if (eSelected.length) {
-                const eclUrl = `${reqBase}/callEclipse.html`;
-                this.ajaxcall(eclUrl, {
-                    lock: true
+            const hSelected = this.playerHand.getSelectedItems();
 
-                }, this, (result) => {
-                    // console.log('success: onEclipse', arguments);
-
-                }, (is_error) => {
-                    // console.log('error: onEclipse', arguments);
-                });
+            if (hSelected.length <= 0) {
+                this.showMessage(_('No card is selected.'), 'error');
                 return;
             }
 
@@ -650,6 +617,34 @@ define([
             }, (is_error) => {
                 // console.log('error: onPlayCard', arguments);
             });
+        },
+
+        onEclipseSelect: function (controlName, itemID) {
+            if (!itemID) { return; }
+            this.playerHand.unselectAll();
+            if (!this.isEclipsePlayable()) {
+                this.eclipse.unselectAll();
+                return;
+            }
+
+            const eSelected = this.eclipse.getSelectedItems();
+
+            if (eSelected.length <= 0) {
+                this.showMessage(_('No card is selected.'), 'error');
+                return;
+            }
+
+            const eclUrl = `${reqBase}/callEclipse.html`;
+            this.ajaxcall(eclUrl, {
+                lock: true
+
+            }, this, (result) => {
+                // console.log('success: onEclipse', arguments);
+
+            }, (is_error) => {
+                // console.log('error: onEclipse', arguments);
+            });
+            return;
         },
 
         onPass: function (evt) {
