@@ -75,6 +75,7 @@ define([
             });
         };
     };
+    const isMobile = navigator.userAgentData?.mobile || false;
 
     return declare("bgagame.ecliptictravelers", ebg.core.gamegui, {
         constructor: function(){
@@ -285,6 +286,15 @@ define([
                 case 'playerTurn':
                     if (this.isCurrentPlayerActive()) {
                         seqProc.then(() => {
+                            // Display play button only on mobile
+                            if (isMobile) {
+                                this.addActionButton(
+                                    'playCard_button', // id
+                                    _('Play selected card.'), // translate (button label)
+                                    'onPlayCard' // name of call back
+                                );
+                            }
+
                             this.addActionButton(
                                 'pass_button', // id
                                 _('Pass'), // translate (button label)
@@ -598,6 +608,9 @@ define([
                 this.playerHand.unselectAll();
                 return;
             }
+            if (isMobile) {
+                return; // let them press `play` button instead
+            }
 
             const hSelected = this.playerHand.getSelectedItems();
 
@@ -626,6 +639,9 @@ define([
                 this.eclipse.unselectAll();
                 return;
             }
+            if (isMobile) {
+                return; // let them press `play` button instead
+            }
 
             const eSelected = this.eclipse.getSelectedItems();
 
@@ -645,6 +661,45 @@ define([
                 // console.log('error: onEclipse', arguments);
             });
             return;
+        },
+
+        // for mobile
+        onPlayCard: function (evt) {
+            dojo.stopEvent(evt);
+
+            const hSelected = this.playerHand.getSelectedItems();
+            const eSelected = this.eclipse.getSelectedItems();
+
+            if (hSelected.length <= 0 && eSelected.length <= 0) {
+                this.showMessage(_('No card is selected.'), 'error');
+                return;
+            }
+
+            if (eSelected.length) {
+                const eclUrl = `${reqBase}/callEclipse.html`;
+                this.ajaxcall(eclUrl, {
+                    lock: true
+
+                }, this, (result) => {
+                    // console.log('success: onEclipse', arguments);
+
+                }, (is_error) => {
+                    // console.log('error: onEclipse', arguments);
+                });
+                return;
+            }
+
+            const plyUrl = `${reqBase}/callPlayCard.html`;
+            this.ajaxcall(plyUrl, {
+                lock: true,
+                cards: hSelected.map(card => card.id).join(',')
+
+            }, this, (result) => {
+                // console.log('success: onPlayCard', arguments);
+
+            }, (is_error) => {
+                // console.log('error: onPlayCard', arguments);
+            });
         },
 
         onPass: function (evt) {
