@@ -62,6 +62,7 @@ define([
     "ebg/stock"
 
 ], function (dojo, declare) {
+    const isMobile = navigator.userAgentData?.mobile || false;
     let seqProc = Promise.resolve();
     const toSeqProc = (func, that, delay = 1000) => {
         return (arg) => {
@@ -75,7 +76,52 @@ define([
             });
         };
     };
-    const isMobile = navigator.userAgentData?.mobile || false;
+    const showMsg = (msg, icon = '') => {
+        seqProc = seqProc.then(() => {
+            const pc = document.getElementById('page-content');
+
+            let msgContainer = document.createElement('div');
+            msgContainer.id = 'MsgContainer';
+
+            const cutInMsg = document.createElement('div');
+            cutInMsg.id = 'Msg';
+            cutInMsg.innerHTML = icon ?
+                msg + ` <i  class="fa fa-${icon}"></i>` : msg;
+
+            msgContainer.appendChild(cutInMsg);
+            pc.appendChild(msgContainer);
+
+            setTimeout(() => {
+                msgContainer.style.opacity = 1;
+            });
+
+            return new Promise((resolve) => {
+                const msgCont = document.getElementById('MsgContainer');
+                if (!msgCont) {
+                    resolve();
+                }
+                // FIXME: this is not very safe as listener may never been triggered (e.g. elm is somehow removed)
+                msgCont.addEventListener('click', function ocl() {
+                    setTimeout(() => {
+                        const msgCont = document.getElementById('MsgContainer');
+                        const pageCont = document.getElementById('page-content');
+                        if (!msgCont) { return resolve(); }
+                        msgCont.style.opacity = 0;
+                        msgCont.removeEventListener('click', ocl);
+                        pageCont.removeChild(msgCont);
+                        return resolve();
+                    }, 500);
+                });
+            });
+        });
+    };
+    const clearMsg = () => {
+        const msgContainer = document.getElementById('MsgContainer');
+        if (!msgContainer) {
+            return;
+        }
+        msgContainer.click();
+    };
 
     return declare("bgagame.ecliptictravelers", ebg.core.gamegui, {
         constructor: function(){
@@ -222,7 +268,7 @@ define([
                 if (this.isCurrentPlayerActive()) {
                     // this called before other events like `break`
                     setTimeout(() => {
-                        seqProc.then(() => {
+                        seqProc = seqProc.then(() => {
                             this.playerHand.setSelectionMode(1);
                             this.updateHandStyle();
                             this.updateEclipseStyle();
@@ -285,21 +331,23 @@ define([
 
                 case 'playerTurn':
                     if (this.isCurrentPlayerActive()) {
-                        seqProc.then(() => {
+                        seqProc = seqProc.then(() => {
                             // Display play button only on mobile
-                            if (isMobile) {
+                            if (isMobile && !document.getElementById('playCard_button')) {
                                 this.addActionButton(
-                                    'playCard_button', // id
-                                    _('Play selected card.'), // translate (button label)
-                                    'onPlayCard' // name of call back
+                                    'playCard_button',
+                                    _('Play selected card.'),
+                                    'onPlayCard'
                                 );
                             }
 
-                            this.addActionButton(
-                                'pass_button', // id
-                                _('Pass'), // translate (button label)
-                                'onPass' // name of call back
-                            );
+                            if (!document.getElementById('pass_button')) {
+                                this.addActionButton(
+                                    'pass_button',
+                                    _('Pass'),
+                                    'onPass'
+                                );
+                            }
                         });
                     }
                     break;
@@ -736,6 +784,7 @@ define([
             dojo.subscribe('playBreakCard', this, toSeqProc(this.notifyPlayBreakCard, this, 3000));
             dojo.subscribe('break', this, toSeqProc(this.notifyBreak, this));
             dojo.subscribe('eclipsed', this, toSeqProc(this.notifyEclipsed, this));
+            dojo.subscribe('endRound', this, this.notifyEndRound, this);
             dojo.subscribe('newRound', this, toSeqProc(this.notifyNewRound, this));
             dojo.subscribe('endGame', this, toSeqProc(this.notifyEndGame, this));
 
@@ -826,6 +875,13 @@ define([
             this.eclipse.removeAll();
             this.eclipse.addToStockWithId(2, 1, 'eclipse_cards');
             this.refreshBgImg();
+        },
+
+        notifyEndRound: function(notify) {
+            const playerName = notify.args.player_name;
+            return showMsg(dojo.string.substitute('${player_name} completed the journey!', {
+                player_name: playerName
+            }), 'flag-checkered');
         },
 
         notifyNewRound: function (notify) {
