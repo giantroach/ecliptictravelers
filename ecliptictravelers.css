@@ -152,6 +152,7 @@ body {
     width: 100%;
     height: 100%;
     display: flex;
+    flex-direction: column;
     align-items: center;
     opacity: 0;
     transition: opacity 200ms ease-out;
@@ -164,4 +165,19 @@ body {
     font-size: xxx-large;
     color: #333;
     font-weight: bolder;
+    text-shadow: -2px 0 white, 0 2px white, 2px 0 white, 0 -2px white;
+    display: flex
+}
+#Msg > div {
+    flex: 1 1 auto;
+    align-self: flex-end;
+}
+
+#ClickMsg {
+    flex: 1 1 auto;
+    text-align: center;
+    font-size: x-large;
+    color: #666;
+    font-weight: bolder;
+    text-shadow: -2px 0 white, 0 2px white, 2px 0 white, 0 -2px white;
 }
