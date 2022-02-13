@@ -85,10 +85,16 @@ define([
 
             const cutInMsg = document.createElement('div');
             cutInMsg.id = 'Msg';
-            cutInMsg.innerHTML = icon ?
-                msg + ` <i  class="fa fa-${icon}"></i>` : msg;
+            cutInMsg.innerHTML = '<div>' +
+                (icon ? msg + ` <i  class="fa fa-${icon}"></i>` : msg) +
+                '</div>';
+
+            const clickMsg = document.createElement('div');
+            clickMsg.id = 'ClickMsg';
+            clickMsg.innerHTML = _('Click to continue');
 
             msgContainer.appendChild(cutInMsg);
+            msgContainer.appendChild(clickMsg);
             pc.appendChild(msgContainer);
 
             setTimeout(() => {
