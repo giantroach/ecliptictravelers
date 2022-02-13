@@ -97,7 +97,7 @@ body {
 .eclipse-wrapper {
     display: flex;
     flex-direction: column;
-    flex: 1 0 192px;
+    flex: 1 1 auto;
     height: 192px;
     justify-content: center;
 }
