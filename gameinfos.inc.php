@@ -132,6 +132,13 @@ $gameinfos = array(
     // Each paragraph must be wrapped with totranslate() for translation and should not contain html (plain text without formatting).
     // A good length for this text is between 100 and 150 words (about 6 to 9 lines on a standard display)
     'presentation' => array(
+        totranslate("A simple travel themed card game."),
+        totranslate("All cards have unique and beautiful CG graphics."),
+        totranslate("Players play cards and propose journey routes."),
+        totranslate(
+        "Though there is rule such as: 'Day time' or 'Sunset' cards can be played just after 'Day time' card. 'Night' can be played just after the 'Sunset' etc."),
+        totranslate("The player who has used all the cards from his hand is praised for being a Great Contributor to the journey."),
+        totranslate("The player who becomes twice a Great Contributor to the journey, is the winner of the game."),
         //    totranslate("This wonderful game is about geometric shapes!"),
         //    totranslate("It was awarded best triangle game of the year in 2005 and nominated for the Spiel des Jahres."),
         //    ...
