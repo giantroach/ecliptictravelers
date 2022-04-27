@@ -41,6 +41,7 @@ class view_ecliptictravelers_ecliptictravelers extends game_view
         /*********** Place your code below:  ************/
         $this->tpl['IN_HAND'] = self::_("My hand");
         $this->tpl['ON_TABLE'] = self::_("Table");
+        $this->tpl['REFERENCE'] = self::_("Reference");
 
         /*
 

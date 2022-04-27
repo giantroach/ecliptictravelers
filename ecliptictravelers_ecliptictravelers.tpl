@@ -25,14 +25,27 @@ See your "view" PHP file to check how to set variables and control blocks
 Please REMOVE this comment before publishing your game on BGA
 -->
 
-<div id="common_table" class="whiteblock">
-  <h3 id="ontable_header">
-    <span>{ON_TABLE}:</span>
-  </h3>
-  <div class="ecliptictravelers-table-cards">
-    <div id="table_cards"></div>
-    <div class="eclipse-wrapper">
-      <div id="eclipse_cards"></div>
+<div id="upper_group">
+  <div id="common_table" class="whiteblock">
+    <h3 id="ontable_header">
+      <span>{ON_TABLE}:</span>
+    </h3>
+    <div class="ecliptictravelers-table-cards">
+      <div id="table_cards"></div>
+      <div class="eclipse-wrapper">
+        <div id="eclipse_cards"></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="reference_table" class="whiteblock">
+    <h3 id="ontable_header">
+      <span>{REFERENCE}:</span>
+    </h3>
+    <div class="ecliptictravelers-reference-cards">
+      <div id="reference_cards">
+        <img src=""></img>
+      </div>
     </div>
   </div>
 </div>
@@ -42,6 +55,7 @@ Please REMOVE this comment before publishing your game on BGA
     <span>{IN_HAND}:</span>
   </h3>
   <div id="player_cards" class="card_inhand"></div>
+  </div>
 </div>
 
 

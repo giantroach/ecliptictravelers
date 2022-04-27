@@ -243,6 +243,9 @@ define([
             dojo.connect(this.eclipse, 'onChangeSelection', this,
                          'onEclipseSelect');
 
+            // reference image
+            document.querySelector('#reference_cards>img').src = `${g_gamethemeurl}img/ref.png`;
+
             // update background image
             this.refreshBgImg();
 
