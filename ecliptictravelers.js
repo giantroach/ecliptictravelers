@@ -190,6 +190,7 @@ define([
                 const card = gamedatas.player_cards[cardPos];
                 this.playerHand.addToStockWithId(
                     card.type_arg, card.id, 'player_hand');
+                this.addCardTooltip(card.id);
             }
 
             dojo.connect(this.playerHand, 'onChangeSelection', this,
@@ -605,6 +606,95 @@ define([
             }
         },
 
+        addCardTooltip: function (id) {
+            const elmID = `player_cards_item_${id}`;
+            const cid = Number(this.playerHand.getItemById(id).type);
+            const def = cardDef.find((c) => c.id === cid);
+            let str = '<ul style="margin-top: 10px;">';
+
+            {
+                str += '<li>&lt;';
+                switch(def.time) {
+                case 'd':
+                    str += _('Daytime');
+                    break;
+                case 'md':
+                    str += _('Midday');
+                    break;
+                case 'n':
+                    str += _('Night');
+                    break;
+                case 'mn':
+                    str += _('Midnight');
+                    break;
+                case 'tn':
+                    str += _('Sunset');
+                    break;
+                case 'td':
+                    str += _('Sunrise');
+                    break;
+                case 't':
+                    str += _('Sunset/Sunrise');
+                    break;
+                }
+                str += '&gt;</li>';
+            }
+
+            {
+                str += '<li>&lt;';
+                switch(def.location) {
+                case 'c':
+                    str += _('City');
+                    break;
+                case 'f':
+                    str += _('Forest');
+                    break;
+                case '':
+                    str += '<span style="color: #AAA;">';
+                    str += _('None');
+                    str += '</span>';
+                    break;
+                }
+                str += '&gt;</li>';
+            }
+
+            {
+                str += '<li>&lt;';
+                switch(def.river) {
+                case 'r':
+                    str += _('River');
+                    break;
+                case 'b':
+                    str += _('Bridge');
+                    break;
+                case '':
+                    str += '<span style="color: #AAA;">';
+                    str += _('None');
+                    str += '</span>';
+                    break;
+                }
+                str += '&gt;</li>';
+            }
+
+            if (def.break) {
+                str += '<li>&lt;';
+                str += '<span style="color: #FA4;">';
+                str += _('Break');
+                str += '</span>';
+                str += '&gt;: ';
+                str += _('Removes all the cards (including this) from the table.');
+                str += '</li>';
+            }
+            str += '<ul>';
+
+            this.addTooltip(
+                elmID,
+                str,
+                _('Click to play this card'),
+                100
+            );
+        },
+
 
         ///////////////////////////////////////////////////
         //// Player's action
@@ -827,6 +917,7 @@ define([
 
         notifyPlayCard: function (notify) {
             const card = notify.args.card;
+            this.removeTooltip(card.id);
             this.playerHand.removeFromStockById(card.id);
 
             if (this.commonTable.items.length &&
@@ -903,6 +994,9 @@ define([
             this.commonTable.addToStockWithId(32, 32, 'common_table');
 
             // refresh hand
+            this.playerHand.items.forEach((i) => {
+                this.removeTooltip(i.id);
+            });
             this.playerHand.removeAll();
             cards.forEach((card) => {
                 this.playerHand.addToStockWithId(
