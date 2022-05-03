@@ -1001,6 +1001,7 @@ define([
             cards.forEach((card) => {
                 this.playerHand.addToStockWithId(
                     card.type_arg, card.id, 'player_hand');
+                this.addCardTooltip(card.id);
             });
 
             // update hand size
