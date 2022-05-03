@@ -917,7 +917,7 @@ define([
 
         notifyPlayCard: function (notify) {
             const card = notify.args.card;
-            this.removeTooltip(card.id);
+            this.removeTooltip(`player_cards_item_${card.id}`);
             this.playerHand.removeFromStockById(card.id);
 
             if (this.commonTable.items.length &&
@@ -995,7 +995,7 @@ define([
 
             // refresh hand
             this.playerHand.items.forEach((i) => {
-                this.removeTooltip(i.id);
+                this.removeTooltip(`player_cards_item_${i.id}`);
             });
             this.playerHand.removeAll();
             cards.forEach((card) => {
