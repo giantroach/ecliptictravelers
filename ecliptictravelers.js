@@ -243,6 +243,7 @@ define([
             }
             dojo.connect(this.eclipse, 'onChangeSelection', this,
                          'onEclipseSelect');
+            this.updateEclipseTooltip();
 
             // reference image
             document.querySelector('#reference_cards>img').src = `${g_gamethemeurl}img/ref.png`;
@@ -405,9 +406,11 @@ define([
                 const cls = elm.className;
                 elm.className = cls.replace(/ ecliptictravelers-unplayable/g, '') + ' ecliptictravelers-playable';
                 this.eclipse.setSelectionMode(1);
+                this.updateEclipseTooltip();
                 return;
             }
             this.eclipse.setSelectionMode(0);
+            this.updateEclipseTooltip();
         },
 
         disableEclipseStyle: function () {
@@ -415,6 +418,7 @@ define([
             const cls = elm.className;
             elm.className = cls.replace(/ ecliptictravelers-playable/g, '') + ' ecliptictravelers-unplayable';
             this.eclipse.setSelectionMode(0);
+            this.updateEclipseTooltip();
         },
 
         isCardPlayable: function (cFrom, cTo, cPrev = null, eclipsed = false) {
@@ -695,6 +699,57 @@ define([
             );
         },
 
+        updateEclipseTooltip: function () {
+            const elmID = `eclipse_cards_item_1`;
+            const cid = Number(this.eclipse.getItemById(1).type);
+            this.removeTooltip(elmID);
+
+            // if eclipse is already used
+            if (this.eclipse.items[0].type === 2) {
+                this.addTooltip(
+                    elmID,
+                    _('Eclipse is not available until next break.'),
+                    _('You may not play Eclipse.'),
+                    100
+                );
+                return false;
+            }
+
+            const cFrom = Number(
+                this.commonTable.items[this.commonTable.items.length - 1].type);
+
+            // if no card is on the table
+            if (cFrom === 32) {
+                this.addTooltip(
+                    elmID,
+                    _('You may not play Eclipse until a card is placed on the table.'),
+                    _('You may not play Eclipse.'),
+                    100
+                );
+                return false;
+            }
+
+            // if transition is on the top
+            const f = cardDef.find((c) => c.id === cFrom);
+            if (['t', 'tn', 'td'].includes(f.time)) {
+                this.addTooltip(
+                    elmID,
+                    _('Eclipse cannot be used during Sunset / Sunrise.'),
+                    _('You may not play Eclipse.'),
+                    100
+                );
+                return false;
+            }
+
+            this.addTooltip(
+                elmID,
+                _('Eclipse reverses Day and Night.'),
+                _('Click to play Eclipse.'),
+                100
+            );
+            return true;
+        },
+
 
         ///////////////////////////////////////////////////
         //// Player's action
@@ -966,6 +1021,7 @@ define([
             this.commonTable.addToStockWithId(32, 32, 'common_table');
             this.eclipse.removeAll();
             this.eclipse.addToStockWithId(1, 1, 'eclipse_cards');
+            this.updateEclipseTooltip();
             this.refreshBgImg();
         },
 
@@ -974,6 +1030,7 @@ define([
             this.appendEclipsedImg(Number(eclipse));
             this.eclipse.removeAll();
             this.eclipse.addToStockWithId(2, 1, 'eclipse_cards');
+            this.updateEclipseTooltip();
             this.refreshBgImg();
         },
 
@@ -1015,6 +1072,7 @@ define([
             this.appendEclipsedImg(Number(eclipse));
             this.eclipse.removeAll();
             this.eclipse.addToStockWithId(1, 1, 'eclipse_cards');
+            this.updateEclipseTooltip();
 
             // increment score
             this.scoreCtrl[scoredPlayerID].incValue(1);
