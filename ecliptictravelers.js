@@ -190,7 +190,7 @@ define([
                 const card = gamedatas.player_cards[cardPos];
                 this.playerHand.addToStockWithId(
                     card.type_arg, card.id, 'player_hand');
-                this.addCardTooltip(card.id);
+                this.addHandTooltip(card.id);
             }
 
             dojo.connect(this.playerHand, 'onChangeSelection', this,
@@ -610,7 +610,7 @@ define([
             }
         },
 
-        addCardTooltip: function (id) {
+        addHandTooltip: function (id) {
             const elmID = `player_cards_item_${id}`;
             const cid = Number(this.playerHand.getItemById(id).type);
             const def = cardDef.find((c) => c.id === cid);
@@ -1058,7 +1058,7 @@ define([
             cards.forEach((card) => {
                 this.playerHand.addToStockWithId(
                     card.type_arg, card.id, 'player_hand');
-                this.addCardTooltip(card.id);
+                this.addHandTooltip(card.id);
             });
 
             // update hand size
