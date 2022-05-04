@@ -1038,7 +1038,6 @@ define([
                 this.updateTableTooltip(true);
                 this.commonTable.removeAll();
                 this.commonTable.addToStockWithId(32, 32, 'common_table');
-                this.updateTableTooltip();
 
                 // update hand size
                 this.handCounters[notify.args.player_id]
@@ -1047,6 +1046,8 @@ define([
                 this.eclipse.removeAll();
                 this.eclipse.addToStockWithId(1, 1, 'eclipse_cards');
                 this.refreshBgImg();
+
+                this.updateTableTooltip();
             }, 2000);
         },
 
@@ -1056,6 +1057,7 @@ define([
             this.eclipse.removeAll();
             this.eclipse.addToStockWithId(1, 1, 'eclipse_cards');
             this.updateEclipseTooltip();
+            this.updateTableTooltip();
             this.refreshBgImg();
         },
 
@@ -1065,6 +1067,7 @@ define([
             this.eclipse.removeAll();
             this.eclipse.addToStockWithId(2, 1, 'eclipse_cards');
             this.updateEclipseTooltip();
+            this.updateTableTooltip();
             this.refreshBgImg();
         },
 
@@ -1107,6 +1110,9 @@ define([
             this.eclipse.removeAll();
             this.eclipse.addToStockWithId(1, 1, 'eclipse_cards');
             this.updateEclipseTooltip();
+
+            // this must be after eclipse
+            this.updateTableTooltip();
 
             // increment score
             this.scoreCtrl[scoredPlayerID].incValue(1);
