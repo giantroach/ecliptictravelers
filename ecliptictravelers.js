@@ -190,6 +190,7 @@ define([
                 const card = gamedatas.player_cards[cardPos];
                 this.playerHand.addToStockWithId(
                     card.type_arg, card.id, 'player_hand');
+                this.addHandTooltip(card.id);
             }
 
             dojo.connect(this.playerHand, 'onChangeSelection', this,
@@ -242,6 +243,17 @@ define([
             }
             dojo.connect(this.eclipse, 'onChangeSelection', this,
                          'onEclipseSelect');
+            this.updateEclipseTooltip();
+
+            // this must be after eclipse init (as it access this.eclipse)
+            this.updateTableTooltip();
+
+            // reference image
+            document.querySelector('#reference_cards>img').src = `${g_gamethemeurl}img/ref.png`;
+            this.addTooltipHtml(
+                'reference_cards',
+                `<div style="background-color: rgba(0, 0, 0, 0.25);">`
+                    + `<img style="width: 500px; height: 500px; object-fit: contain;" src="${g_gamethemeurl}img/ref.png"></div>`);
 
             // update background image
             this.refreshBgImg();
@@ -401,9 +413,11 @@ define([
                 const cls = elm.className;
                 elm.className = cls.replace(/ ecliptictravelers-unplayable/g, '') + ' ecliptictravelers-playable';
                 this.eclipse.setSelectionMode(1);
+                this.updateEclipseTooltip();
                 return;
             }
             this.eclipse.setSelectionMode(0);
+            this.updateEclipseTooltip();
         },
 
         disableEclipseStyle: function () {
@@ -411,6 +425,7 @@ define([
             const cls = elm.className;
             elm.className = cls.replace(/ ecliptictravelers-playable/g, '') + ' ecliptictravelers-unplayable';
             this.eclipse.setSelectionMode(0);
+            this.updateEclipseTooltip();
         },
 
         isCardPlayable: function (cFrom, cTo, cPrev = null, eclipsed = false) {
@@ -600,6 +615,170 @@ define([
                 document.body.style.backgroundImage = '';
                 break;
             }
+        },
+
+        addCardTooltip: function (elmID, cid, eclipsed = false, playable = true) {
+            const def = cardDef.find((c) => c.id === cid);
+            let str = '<ul style="margin-top: 10px;">';
+
+            {
+                str += '<li>&lt;';
+                switch(def.time) {
+                case 'd':
+                    str += !eclipsed ?
+                        _('Daytime') :
+                        _('Night (Eclipsed)');
+                    break;
+                case 'md':
+                    str += !eclipsed ?
+                        _('Midday') :
+                        _('Midnight (Eclipsed)');
+                    break;
+                case 'n':
+                    str += !eclipsed ?
+                        _('Night') :
+                        _('Daytime (Eclipsed)');
+                    break;
+                case 'mn':
+                    str += !eclipsed ?
+                        _('Midnight') :
+                        _('Midday (Eclipsed)');
+                    break;
+                case 'tn':
+                    str += _('Sunset');
+                    break;
+                case 'td':
+                    str += _('Sunrise');
+                    break;
+                case 't':
+                    str += _('Sunset/Sunrise');
+                    break;
+                }
+                str += '&gt;</li>';
+            }
+
+            {
+                str += '<li>&lt;';
+                switch(def.location) {
+                case 'c':
+                    str += _('City');
+                    break;
+                case 'f':
+                    str += _('Forest');
+                    break;
+                case '':
+                    str += '<span style="color: #AAA;">';
+                    str += _('None');
+                    str += '</span>';
+                    break;
+                }
+                str += '&gt;</li>';
+            }
+
+            {
+                str += '<li>&lt;';
+                switch(def.river) {
+                case 'r':
+                    str += _('River');
+                    break;
+                case 'b':
+                    str += _('Bridge');
+                    break;
+                case '':
+                    str += '<span style="color: #AAA;">';
+                    str += _('None');
+                    str += '</span>';
+                    break;
+                }
+                str += '&gt;</li>';
+            }
+
+            if (def.break) {
+                str += '<li>&lt;';
+                str += '<span style="color: #FA4;">';
+                str += _('Break');
+                str += '</span>';
+                str += '&gt;: ';
+                str += _('Removes all the cards (including this) from the table.');
+                str += '</li>';
+            }
+            str += '<ul>';
+
+            this.addTooltip(
+                elmID,
+                str,
+                playable ? _('Click to play this card') : ''
+            );
+        },
+
+        addHandTooltip: function(id) {
+            const elmID = `player_cards_item_${id}`;
+            const cid = Number(this.playerHand.getItemById(id).type);
+            this.addCardTooltip(elmID, cid);
+        },
+
+        updateTableTooltip: function(onlyRemove = false) {
+            // remove all tooltip from the table
+            this.commonTable.items.forEach((i) => {
+                this.removeTooltip(`table_cards_item_${i.id}`);
+            });
+            if (onlyRemove) { return; }
+
+            // attach tooltip only for the latest one
+            const card = this.commonTable.items[this.commonTable.items.length - 1];
+            const elmID = `table_cards_item_${card.id}`;
+            if (card.type === 32) {
+                this.addTooltip(elmID, _('No card is on the table.'), '');
+                return;
+            }
+            this.addCardTooltip(elmID, Number(card.type), this.isEclipsed(), false);
+        },
+
+        updateEclipseTooltip: function () {
+            const elmID = `eclipse_cards_item_1`;
+            const cid = Number(this.eclipse.getItemById(1).type);
+            this.removeTooltip(elmID);
+
+            // if eclipse is already used
+            if (this.eclipse.items[0].type === 2) {
+                this.addTooltip(
+                    elmID,
+                    _('Eclipse is not available until next break.'),
+                    ''
+                );
+                return false;
+            }
+
+            const cFrom = Number(
+                this.commonTable.items[this.commonTable.items.length - 1].type);
+
+            // if no card is on the table
+            if (cFrom === 32) {
+                this.addTooltip(
+                    elmID,
+                    _('You may not play Eclipse until a card is placed on the table.'),
+                    ''
+                );
+                return false;
+            }
+
+            // if transition is on the top
+            const f = cardDef.find((c) => c.id === cFrom);
+            if (['t', 'tn', 'td'].includes(f.time)) {
+                this.addTooltip(
+                    elmID,
+                    _('Eclipse cannot be used during Sunset / Sunrise.'),
+                    ''
+                );
+                return false;
+            }
+
+            this.addTooltip(
+                elmID,
+                _('Eclipse reverses Day and Night.'),
+                _('Click to play Eclipse.'),
+            );
+            return true;
         },
 
 
@@ -824,6 +1003,7 @@ define([
 
         notifyPlayCard: function (notify) {
             const card = notify.args.card;
+            this.removeTooltip(`player_cards_item_${card.id}`);
             this.playerHand.removeFromStockById(card.id);
 
             if (this.commonTable.items.length &&
@@ -832,6 +1012,7 @@ define([
             }
             this.commonTable.addToStockWithId(
                 card.type_arg, card.id, 'common_table');
+            this.updateTableTooltip();
 
             // update hand size
             this.handCounters[notify.args.player_id]
@@ -854,8 +1035,10 @@ define([
 
             // now remove all from the table
             setTimeout(() => {
+                this.updateTableTooltip(true);
                 this.commonTable.removeAll();
                 this.commonTable.addToStockWithId(32, 32, 'common_table');
+                this.updateTableTooltip();
 
                 // update hand size
                 this.handCounters[notify.args.player_id]
@@ -872,6 +1055,7 @@ define([
             this.commonTable.addToStockWithId(32, 32, 'common_table');
             this.eclipse.removeAll();
             this.eclipse.addToStockWithId(1, 1, 'eclipse_cards');
+            this.updateEclipseTooltip();
             this.refreshBgImg();
         },
 
@@ -880,6 +1064,7 @@ define([
             this.appendEclipsedImg(Number(eclipse));
             this.eclipse.removeAll();
             this.eclipse.addToStockWithId(2, 1, 'eclipse_cards');
+            this.updateEclipseTooltip();
             this.refreshBgImg();
         },
 
@@ -900,10 +1085,14 @@ define([
             this.commonTable.addToStockWithId(32, 32, 'common_table');
 
             // refresh hand
+            this.playerHand.items.forEach((i) => {
+                this.removeTooltip(`player_cards_item_${i.id}`);
+            });
             this.playerHand.removeAll();
             cards.forEach((card) => {
                 this.playerHand.addToStockWithId(
                     card.type_arg, card.id, 'player_hand');
+                this.addHandTooltip(card.id);
             });
 
             // update hand size
@@ -917,6 +1106,7 @@ define([
             this.appendEclipsedImg(Number(eclipse));
             this.eclipse.removeAll();
             this.eclipse.addToStockWithId(1, 1, 'eclipse_cards');
+            this.updateEclipseTooltip();
 
             // increment score
             this.scoreCtrl[scoredPlayerID].incValue(1);
