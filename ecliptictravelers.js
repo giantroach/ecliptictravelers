@@ -714,7 +714,6 @@ define([
         },
 
         updateTableTooltip: function(onlyRemove = false) {
-            // FIXME:
             // remove all tooltip from the table
             this.commonTable.items.forEach((i) => {
                 this.removeTooltip(`table_cards_item_${i.id}`);
