@@ -190,7 +190,7 @@ define([
                 const card = gamedatas.player_cards[cardPos];
                 this.playerHand.addToStockWithId(
                     card.type_arg, card.id, 'player_hand');
-                this.addHandTooltip(card.id);
+                this.addCardTooltip(card.id);
             }
 
             dojo.connect(this.playerHand, 'onChangeSelection', this,
@@ -610,7 +610,7 @@ define([
             }
         },
 
-        addHandTooltip: function (id) {
+        addCardTooltip: function (id, eclipsed = false) {
             const elmID = `player_cards_item_${id}`;
             const cid = Number(this.playerHand.getItemById(id).type);
             const def = cardDef.find((c) => c.id === cid);
@@ -694,8 +694,7 @@ define([
             this.addTooltip(
                 elmID,
                 str,
-                _('Click to play this card'),
-                100
+                _('Click to play this card')
             );
         },
 
@@ -709,8 +708,7 @@ define([
                 this.addTooltip(
                     elmID,
                     _('Eclipse is not available until next break.'),
-                    _('You may not play Eclipse.'),
-                    100
+                    ''
                 );
                 return false;
             }
@@ -723,8 +721,7 @@ define([
                 this.addTooltip(
                     elmID,
                     _('You may not play Eclipse until a card is placed on the table.'),
-                    _('You may not play Eclipse.'),
-                    100
+                    ''
                 );
                 return false;
             }
@@ -735,8 +732,7 @@ define([
                 this.addTooltip(
                     elmID,
                     _('Eclipse cannot be used during Sunset / Sunrise.'),
-                    _('You may not play Eclipse.'),
-                    100
+                    ''
                 );
                 return false;
             }
@@ -745,7 +741,6 @@ define([
                 elmID,
                 _('Eclipse reverses Day and Night.'),
                 _('Click to play Eclipse.'),
-                100
             );
             return true;
         },
@@ -1058,7 +1053,7 @@ define([
             cards.forEach((card) => {
                 this.playerHand.addToStockWithId(
                     card.type_arg, card.id, 'player_hand');
-                this.addHandTooltip(card.id);
+                this.addCardTooltip(card.id);
             });
 
             // update hand size
