@@ -247,7 +247,8 @@ define([
             document.querySelector('#reference_cards>img').src = `${g_gamethemeurl}img/ref.png`;
             this.addTooltipHtml(
                 'reference_cards',
-                `<div style="width: 512px;height: 512px;"><img src="${g_gamethemeurl}img/ref.png"></div>`);
+                `<div style="background-color: rgba(0, 0, 0, 0.25);">`
+                    + `<img style="width: 500px; height: 500px; object-fit: contain;" src="${g_gamethemeurl}img/ref.png"></div>`);
 
             // update background image
             this.refreshBgImg();
