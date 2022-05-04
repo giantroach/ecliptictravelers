@@ -190,7 +190,7 @@ define([
                 const card = gamedatas.player_cards[cardPos];
                 this.playerHand.addToStockWithId(
                     card.type_arg, card.id, 'player_hand');
-                this.addCardTooltip(card.id);
+                this.addHandTooltip(card.id);
             }
 
             dojo.connect(this.playerHand, 'onChangeSelection', this,
@@ -244,6 +244,9 @@ define([
             dojo.connect(this.eclipse, 'onChangeSelection', this,
                          'onEclipseSelect');
             this.updateEclipseTooltip();
+
+            // this must be after eclipse init (as it access this.eclipse)
+            this.updateTableTooltip();
 
             // reference image
             document.querySelector('#reference_cards>img').src = `${g_gamethemeurl}img/ref.png`;
@@ -610,9 +613,7 @@ define([
             }
         },
 
-        addCardTooltip: function (id, eclipsed = false) {
-            const elmID = `player_cards_item_${id}`;
-            const cid = Number(this.playerHand.getItemById(id).type);
+        addCardTooltip: function (elmID, cid, eclipsed = false, playable = true) {
             const def = cardDef.find((c) => c.id === cid);
             let str = '<ul style="margin-top: 10px;">';
 
@@ -620,16 +621,24 @@ define([
                 str += '<li>&lt;';
                 switch(def.time) {
                 case 'd':
-                    str += _('Daytime');
+                    str += !eclipsed ?
+                        _('Daytime') :
+                        _('Night (Eclipsed)');
                     break;
                 case 'md':
-                    str += _('Midday');
+                    str += !eclipsed ?
+                        _('Midday') :
+                        _('Midnight (Eclipsed)');
                     break;
                 case 'n':
-                    str += _('Night');
+                    str += !eclipsed ?
+                        _('Night') :
+                        _('Daytime (Eclipsed)');
                     break;
                 case 'mn':
-                    str += _('Midnight');
+                    str += !eclipsed ?
+                        _('Midnight') :
+                        _('Midday (Eclipsed)');
                     break;
                 case 'tn':
                     str += _('Sunset');
@@ -694,8 +703,32 @@ define([
             this.addTooltip(
                 elmID,
                 str,
-                _('Click to play this card')
+                playable ? _('Click to play this card') : ''
             );
+        },
+
+        addHandTooltip: function(id) {
+            const elmID = `player_cards_item_${id}`;
+            const cid = Number(this.playerHand.getItemById(id).type);
+            this.addCardTooltip(elmID, cid);
+        },
+
+        updateTableTooltip: function(onlyRemove = false) {
+            // FIXME:
+            // remove all tooltip from the table
+            this.commonTable.items.forEach((i) => {
+                this.removeTooltip(`table_cards_item_${i.id}`);
+            });
+            if (onlyRemove) { return; }
+
+            // attach tooltip only for the latest one
+            const card = this.commonTable.items[this.commonTable.items.length - 1];
+            const elmID = `table_cards_item_${card.id}`;
+            if (card.type === 32) {
+                this.addTooltip(elmID, _('No card is on the table.'), '');
+                return;
+            }
+            this.addCardTooltip(elmID, Number(card.type), this.isEclipsed(), false);
         },
 
         updateEclipseTooltip: function () {
@@ -976,6 +1009,7 @@ define([
             }
             this.commonTable.addToStockWithId(
                 card.type_arg, card.id, 'common_table');
+            this.updateTableTooltip();
 
             // update hand size
             this.handCounters[notify.args.player_id]
@@ -998,8 +1032,10 @@ define([
 
             // now remove all from the table
             setTimeout(() => {
+                this.updateTableTooltip(true);
                 this.commonTable.removeAll();
                 this.commonTable.addToStockWithId(32, 32, 'common_table');
+                this.updateTableTooltip();
 
                 // update hand size
                 this.handCounters[notify.args.player_id]
@@ -1053,7 +1089,7 @@ define([
             cards.forEach((card) => {
                 this.playerHand.addToStockWithId(
                     card.type_arg, card.id, 'player_hand');
-                this.addCardTooltip(card.id);
+                this.addHandTooltip(card.id);
             });
 
             // update hand size
