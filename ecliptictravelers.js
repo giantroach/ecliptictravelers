@@ -838,6 +838,7 @@ define([
             const pCardID = this.commonTable.items.length < 2 ? null :
                   Number(this.commonTable.items[this.commonTable.items.length - 2].type);
             if (!this.isCardPlayable(tCardID, hCardID, pCardID, this.isEclipsed())) {
+                this.showMessage(_('This card cannot be played.'), 'info');
                 this.playerHand.unselectAll();
                 return;
             }
